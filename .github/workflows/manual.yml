@@ -98,8 +98,6 @@ jobs:
         cd void-packages
         echo XBPS_PKG_COMPTYPE=xz >> etc/conf
         ./xbps-src pkg onivim2
-        ./xbps-src pkg slack-desktop
-        ./xbps-src pkg protonmail-bridge
         ./xbps-src pkg spotify-adblock
         ./xbps-src pkg msttcorefonts
         ./xbps-src pkg mctlauncher
