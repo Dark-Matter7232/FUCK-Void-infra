@@ -13,7 +13,7 @@ jobs:
     steps:
     - name: Clone void-packages 
       run: |
-        git clone https://gitlab.com/Dark-Matter7232/FUCK-Void.git
+        git clone --depth=1 https://gitlab.com/Dark-Matter7232/FUCK-Void.git
         git clone --depth=1 https://github.com/void-linux/void-packages.git 
         git clone https://github.com/siduck76/VUR.git -b master --depth=1 
         git clone --depth=1 https://github.com/not-void/nvoid.git 
@@ -78,8 +78,6 @@ jobs:
         cd ../
         xgensum -f -i ungoogled-chromium-marmaduke
         xgensum -f -i ungoogled-chromium-marmaduke
-        xgensum -f -i spotify
-        xgensum -f -i spotify
         xgensum -f -i miniplayer
         xgensum -f -i miniplayer
         xgensum -f -i librewolf
@@ -101,8 +99,6 @@ jobs:
         cd void-packages
         echo XBPS_PKG_COMPTYPE=xz >> etc/conf
         ./xbps-src pkg onivim2
-        ./xbps-src pkg slack-desktop
-        ./xbps-src pkg protonmail-bridge
         ./xbps-src pkg spotify-adblock
         ./xbps-src pkg msttcorefonts
         ./xbps-src pkg mctlauncher
@@ -118,15 +114,13 @@ jobs:
         source ~/.profile
         export XBPS_DISTDIR=void-packages
         export PATH=~/xbps-git/usr/bin:$PATH
-        xbps-rindex --privkey privkey.pem --sign --signedby 'anurag' void-packages/hostdir/binpkgs
+        xbps-rindex --privkey FUCK-Void/privkey.pem --sign --signedby 'anurag' void-packages/hostdir/binpkgs
         xbps-rindex --sign-pkg --privkey FUCK-Void/privkey.pem void-packages/hostdir/binpkgs/*.xbps
         rm -rf FUCK-Void/generic
         mv void-packages/hostdir/binpkgs FUCK-Void/generic
         rm -rf void-packages xbps-static-latest.x86_64-musl.tar.xz void* void-chroot start-void.sh VUR signpackages nvoid
-        rm -rf FUCK-Void/public/index.html && tree -H 'FUCK-Void/' -L 2 --noreport --charset utf-8 -P "*xbps|*sig|*-repodata" >> index.html
-        mv index.html FUCK-Void/public/index.html
-        git config --local user.email "dark-matter7232@users.noreply.github.com"
-        git config --local user.name "Dark-Matter7232"
+        git config --global user.email "dark-matter7232@users.noreply.github.com"
+        git config --global user.name "Dark-Matter7232"
         cd FUCK-Void
         git add -A
         git commit -m "Update Repo" -a
