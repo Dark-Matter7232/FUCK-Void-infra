@@ -99,25 +99,25 @@ jobs:
         source ~/.profile
         cd void-packages
         echo XBPS_PKG_COMPTYPE=xz >> etc/conf
-        ./xbps-src pkg onivim2
-        ./xbps-src pkg slack-desktop
-        ./xbps-src pkg protonmail-bridge
-        ./xbps-src pkg spotify-adblock
-        ./xbps-src pkg msttcorefonts
+        #./xbps-src pkg onivim2
+        #./xbps-src pkg slack-desktop
+        #./xbps-src pkg protonmail-bridge
+        #./xbps-src pkg spotify-adblock
+        #./xbps-src pkg msttcorefonts
         ./xbps-src pkg mctlauncher
-        ./xbps-src pkg ungoogled-chromium-marmaduke
-        ./xbps-src pkg spotify
-        ./xbps-src pkg discord
-        ./xbps-src pkg wezterm
-        ./xbps-src pkg librewolf
-        ./xbps-src pkg marktext
-        ./xbps-src pkg miniplayer
+        #./xbps-src pkg ungoogled-chromium-marmaduke
+        #./xbps-src pkg spotify
+        #./xbps-src pkg discord
+        #./xbps-src pkg wezterm
+        #./xbps-src pkg librewolf
+        #./xbps-src pkg marktext
+        #./xbps-src pkg miniplayer
     - name: Post package-build steps
       run: |
         source ~/.profile
         export XBPS_DISTDIR=void-packages
         export PATH=~/xbps-git/usr/bin:$PATH
-        xbps-rindex --privkey privkey.pem --sign --signedby 'anurag' void-packages/hostdir/binpkgs
+        xbps-rindex --privkey FUCK-Void/privkey.pem --sign --signedby 'anurag' void-packages/hostdir/binpkgs
         xbps-rindex --sign-pkg --privkey FUCK-Void/privkey.pem void-packages/hostdir/binpkgs/*.xbps
         rm -rf FUCK-Void/generic
         mv void-packages/hostdir/binpkgs FUCK-Void/generic
