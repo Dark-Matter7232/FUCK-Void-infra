@@ -1,0 +1,76 @@
+name: binaries-build-env
+on: 
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+        fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+    - name: Clone void-packages 
+      run: git clone --depth=1 https://github.com/void-linux/void-packages.git && source ~/.profile
+    - name: Pre package-build steps(1/2)
+      run: source ~/.profile && wget http://alpha.de.repo.voidlinux.org/static/xbps-static-latest.x86_64-musl.tar.xz && mkdir ~/XBPS && tar xvf xbps-static-latest.x86_64-musl.tar.xz -C ~/XBPS && echo 'export PATH=~/XBPS/usr/bin:$PATH' >> ~/.profile
+    - name: Pre package-build steps(2/2)
+      run:  cd void-packages && rm -rf generic/* && source ~/.profile && ./xbps-src binary-bootstrap && echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf 
+    - name: Build Packages
+      run: |
+        cd void-packages
+        source ~/.profile
+         #sed -i '/repository=nonfree/d' srcpkgs/sublime-merge-bin/template
+         #./xbps-src pkg sublime-merge-bin
+         #./xbps-src pkg hopper
+         #./xbps-src pkg protonmail-bridge
+         #./xbps-src pkg steam-fonts
+        ./xbps-src pkg font-fontin
+        ./xbps-src pkg font-symbola
+         #sed -i '/repository=nonfree/d' srcpkgs/master-pdf-editor/template
+         #./xbps-src pkg master-pdf-editor
+         #sed -i '/repository="nonfree"/d' srcpkgs/slack-desktop/template
+         #./xbps-src pkg slack-desktop
+         #sed -i '/repository=nonfree/d' srcpkgs/discord/template
+         #./xbps-src pkg discord
+         #sed -i '/repository=nonfree/d' srcpkgs/teams-bin/template
+         #./xbps-src pkg teams-bin
+         #sed -i '/repository=nonfree/d' srcpkgs/zoom/template
+         #./xbps-src pkg zoom
+         #sed -i '/repository=nonfree/d' srcpkgs/google-chrome/template
+         #./xbps-src pkg google-chrome
+         #sed -i '/repository=nonfree/d' srcpkgs/vivaldi/template
+         #./xbps-src pkg vivaldi
+         #sed -i '/repository=nonfree/d' srcpkgs/msttcorefonts/template
+         #./xbps-src pkg msttcorefonts
+    - name: Post package-build steps
+      run: |
+        git clone https://github.com/termux/proot proot-src
+        cd proot-src/src
+        sudo apt-get update && sudo apt-get install libtalloc-dev
+        make 
+        sudo cp proot /bin
+        cp proot ../../
+        cd ../../
+        wget https://gist.githubusercontent.com/mobibooks/d3b4005dea13fa9f4df1cc43495b1fbc/raw/cabf4489df0eff483e9b13947dabcc16345fa3b5/void-build
+        bash void-build
+        source ~/.profile
+        xbps-rindex --sign-pkg --privkey privkey.pem void-packages/hostdir/binpkgs/*.xbps
+        rm -rf generic
+        mv void-packages/hostdir/binpkgs generic
+        rm -rf void-packages xbps-static-latest.x86_64-musl.tar.xz void* void-chroot start-void.sh proot-src
+        rm -rf index.html && tree -H '.' -L 2 --noreport --charset utf-8 -P "*xbps|*sig|*-repodata" >> index.html
+        git config --local user.email "dark-matter7232@users.noreply.github.com"
+        git config --local user.name "Dark-Matter7232"
+        git add -A
+        git commit -m "Add changes" -a
+    - name: Push packages
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}

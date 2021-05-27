@@ -1,0 +1,138 @@
+name: binaries-build-manual
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Clone void-packages 
+      run: |
+        git clone https://gitlab.com/Dark-Matter7232/FUCK-Void.git
+        git clone --depth=1 https://github.com/void-linux/void-packages.git 
+        git clone https://github.com/siduck76/VUR.git -b master --depth=1 
+        git clone --depth=1 https://github.com/not-void/nvoid.git 
+        source ~/.profile 
+        sudo apt-get update
+    - name: Pre package-build steps(1/2)
+      run: |
+        source ~/.profile 
+        wget http://alpha.de.repo.voidlinux.org/static/xbps-static-latest.x86_64-musl.tar.xz 
+        mkdir ~/XBPS 
+        tar xvf xbps-static-latest.x86_64-musl.tar.xz -C ~/XBPS
+        echo 'export PATH=~/XBPS/usr/bin:$PATH' >> ~/.profile 
+    - name: Pre package-build steps(2/2)
+      run: |      
+        cd void-packages 
+        source ~/.profile 
+        ./xbps-src binary-bootstrap 
+        echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
+        cp -r ../nvoid/srcpkgs/ungoogled-chromium-marmaduke srcpkgs/
+        mv srcpkgs/spotify-adblock-linux srcpkgs/spotify-adblock
+        rm -rf srcpkgs/spotify-adblock/template
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/spa-template -O template
+        mv template srcpkgs/spotify-adblock/
+        rm -rf srcpkgs/ungoogled-chromium-marmaduke/template
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/ugc-template -O template
+        mv template srcpkgs/ungoogled-chromium-marmaduke/
+        mkdir srcpkgs/mctlauncher
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/tl-template -O template
+        mv template srcpkgs/mctlauncher/
+        mkdir srcpkgs/wezterm
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/wezterm -O template
+        mv template srcpkgs/wezterm
+        mkdir srcpkgs/librewolf
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/librewolf -O template
+        mv template srcpkgs/librewolf
+        mkdir srcpkgs/marktext
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/marktext -O template
+        mv template srcpkgs/marktext
+        mkdir srcpkgs/miniplayer
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/miniplayer -O template
+        mv template srcpkgs/miniplayer/
+        mkdir srcpkgs/onivim2
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/onivim2 -O template
+        mv template srcpkgs/onivim2
+        mkdir srcpkgs/onivim2/files
+        wget https://raw.githubusercontent.com/Dark-Matter7232/void-linux-templates/main/templates/Onivim2.desktop
+        mv Onivim2.desktop srcpkgs/onivim2/files
+        git clone https://github.com/leahneukirchen/xtools.git
+        cd xtools
+        make install
+        source ~/.profile
+        cd ../
+        export XBPS_DISTDIR=.
+        git clone https://github.com/void-linux/xbps
+        sudo apt-get install libarchive-dev
+        cd xbps
+        ./configure --enable-rpath --prefix=/usr --sysconfdir=/etc
+        make -j$(nproc)
+        make DESTDIR=~/xbps-git install clean
+        export PATH=~/xbps-git/usr/bin:$PATH >> ~/.profile
+        source ~/.profile
+        cd ../
+        xgensum -f -i ungoogled-chromium-marmaduke
+        xgensum -f -i ungoogled-chromium-marmaduke
+        xgensum -f -i spotify
+        xgensum -f -i spotify
+        xgensum -f -i miniplayer
+        xgensum -f -i miniplayer
+        xgensum -f -i librewolf
+        xgensum -f -i librewolf
+        xgensum -f -i marktext
+        xgensum -f -i marktext
+        xgensum -f -i wezterm
+        xgensum -f -i wezterm
+        sed -i '/repository=nonfree/d' srcpkgs/spotify/template
+        sed -i '/restricted=yes/d' srcpkgs/spotify/template
+        sed -i '/restricted=yes/d' srcpkgs/protonmail-bridge/template
+        sed -i '/restricted=yes/d' srcpkgs/slack-desktop/template
+        sed -i '/repository=/d' srcpkgs/slack-desktop/template
+        sed -i '/repository=nonfree/d' srcpkgs/discord/template
+        sed -i '/repository=nonfree/d' srcpkgs/msttcorefonts/template
+    - name: Build Packages
+      run: |
+        source ~/.profile
+        cd void-packages
+        echo XBPS_PKG_COMPTYPE=xz >> etc/conf
+        ./xbps-src pkg onivim2
+        ./xbps-src pkg slack-desktop
+        ./xbps-src pkg protonmail-bridge
+        ./xbps-src pkg spotify-adblock
+        ./xbps-src pkg msttcorefonts
+        ./xbps-src pkg mctlauncher
+        ./xbps-src pkg ungoogled-chromium-marmaduke
+        ./xbps-src pkg spotify
+        ./xbps-src pkg discord
+        ./xbps-src pkg wezterm
+        ./xbps-src pkg librewolf
+        ./xbps-src pkg marktext
+        ./xbps-src pkg miniplayer
+    - name: Post package-build steps
+      run: |
+        source ~/.profile
+        export XBPS_DISTDIR=void-packages
+        export PATH=~/xbps-git/usr/bin:$PATH
+        xbps-rindex --privkey privkey.pem --sign --signedby 'anurag' void-packages/hostdir/binpkgs
+        xbps-rindex --sign-pkg --privkey FUCK-Void/privkey.pem void-packages/hostdir/binpkgs/*.xbps
+        rm -rf FUCK-Void/generic
+        mv void-packages/hostdir/binpkgs FUCK-Void/generic
+        rm -rf void-packages xbps-static-latest.x86_64-musl.tar.xz void* void-chroot start-void.sh VUR signpackages nvoid
+        rm -rf FUCK-Void/public/index.html && tree -H 'FUCK-Void/' -L 2 --noreport --charset utf-8 -P "*xbps|*sig|*-repodata" >> index.html
+        mv index.html FUCK-Void/public/index.html
+        git config --local user.email "dark-matter7232@users.noreply.github.com"
+        git config --local user.name "Dark-Matter7232"
+        cd FUCK-Void
+        git add -A
+        git commit -m "Update Repo" -a
+    - name: Push packages to gitlab
+      env:
+        token: ${{ secrets.GITLAB_ACCESS_TOKEN }}
+      run: |
+        cd FUCK-Void
+        git remote set-url origin "https://oauth2:${token}@gitlab.com/Dark-Matter7232/FUCK-Void.git"
+        git push origin main
